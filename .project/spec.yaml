@@ -96,13 +96,7 @@ execution:
             cd /project/code/api && \
             export HF_HOME=/project/models && \
             export PYTHONUNBUFFERED=1 && \
-            gunicorn app:app \
-                --workers 4 \
-                --threads 2 \
-                --worker-class uvicorn.workers.UvicornWorker \
-                --bind 0.0.0.0:8000 \
-                --timeout 300 \
-                --access-logfile -
+            python app_simple.py
           health_check_command: curl -f http://localhost:8000/health
           stop_command: pkill -f 'gunicorn app:app'
           user_msg: "Starting Qwen Image Edit API server..."
