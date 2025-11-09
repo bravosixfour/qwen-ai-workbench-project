@@ -1,0 +1,111 @@
+{
+  "project_name": "qwen-image-edit-ai-workbench",
+  "version": "1.0.0",
+  "description": "Enterprise deployment of Qwen Image Edit API for NVIDIA AI Workbench",
+  
+  "environments": {
+    "dgx-spark": {
+      "name": "DGX Spark",
+      "gpu_count": 2,
+      "gpu_memory": "48GB",
+      "system_memory": "256GB",
+      "workers": 4,
+      "batch_size": 8,
+      "recommended": true,
+      "description": "Latest DGX Spark system with Ada architecture"
+    },
+    "dgx-a100": {
+      "name": "DGX A100",
+      "gpu_count": 8,
+      "gpu_memory": "40GB",
+      "system_memory": "1TB",
+      "workers": 8,
+      "batch_size": 6,
+      "recommended": true,
+      "description": "DGX A100 system with Ampere architecture"
+    },
+    "dgx-h100": {
+      "name": "DGX H100",
+      "gpu_count": 8,
+      "gpu_memory": "80GB",
+      "system_memory": "2TB",
+      "workers": 12,
+      "batch_size": 16,
+      "recommended": true,
+      "description": "Latest DGX H100 system with Hopper architecture"
+    },
+    "workstation": {
+      "name": "Workstation",
+      "gpu_count": 1,
+      "gpu_memory": "24GB",
+      "system_memory": "64GB",
+      "workers": 2,
+      "batch_size": 2,
+      "recommended": false,
+      "description": "Single GPU workstation for development/testing"
+    }
+  },
+
+  "model_config": {
+    "model_name": "Qwen/Qwen-Image-Edit-2509",
+    "model_size": "~50GB",
+    "min_vram": "24GB",
+    "recommended_vram": "48GB",
+    "precision": "fp16",
+    "quantization": "optional"
+  },
+
+  "service_config": {
+    "api": {
+      "port": 8000,
+      "workers": "auto",
+      "timeout": 300,
+      "max_image_size": "4096x4096",
+      "supported_formats": ["jpg", "jpeg", "png", "webp"]
+    },
+    "ui": {
+      "port": 3002,
+      "auto_launch": true,
+      "api_timeout": 120
+    },
+    "cache": {
+      "type": "redis",
+      "port": 6379,
+      "max_memory": "2GB"
+    }
+  },
+
+  "monitoring": {
+    "health_checks": true,
+    "metrics_endpoint": "/metrics",
+    "log_level": "INFO",
+    "gpu_monitoring": true
+  },
+
+  "security": {
+    "api_key_required": false,
+    "cors_enabled": true,
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 60
+    }
+  },
+
+  "deployment_notes": {
+    "dgx_spark": [
+      "Optimal for production workloads",
+      "Use both GPUs for maximum throughput", 
+      "Consider MIG mode for multi-tenancy"
+    ],
+    "dgx_a100": [
+      "Excellent for high-throughput scenarios",
+      "Can run multiple instances simultaneously",
+      "Perfect for enterprise deployments"
+    ],
+    "workstation": [
+      "Good for development and testing",
+      "May need to reduce batch sizes",
+      "Consider model quantization if memory limited"
+    ]
+  }
+}

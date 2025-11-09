@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quanto mango Image Editor - AI-Powered Image Editing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-zone.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        .progress-ring {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        
+        .result-image {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="py-6">
+    <!-- Header -->
+    <div class="max-w-4xl mx-auto px-4 mb-8">
+        <div class="glass-card rounded-2xl p-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="image" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">Quanto mango Image Editor</h1>
+                        <p class="text-gray-600">AI-powered image editing with Quanto mango-2509</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-500">Model</div>
+                    <div class="font-medium text-gray-700">Quanto mango Image Edit 2509</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 space-y-6">
+        
+        <!-- Image Upload Section -->
+        <div class="glass-card rounded-2xl p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i data-lucide="upload" class="w-5 h-5 mr-2"></i>
+                Upload Image
+            </h2>
+            
+            <div id="dropZone" class="drop-zone rounded-xl p-8 text-center cursor-pointer">
+                <div id="uploadPrompt">
+                    <i data-lucide="image-plus" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">Drop your image here</h3>
+                    <p class="text-gray-500 mb-4">or click to browse files</p>
+                    <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Choose File
+                    </button>
+                </div>
+                <div id="imagePreview" class="hidden">
+                    <img id="previewImg" class="max-w-full max-h-64 mx-auto rounded-lg shadow-lg">
+                    <div class="mt-4">
+                        <p class="text-sm text-gray-600" id="fileName"></p>
+                        <button onclick="clearImage()" class="mt-2 text-red-600 hover:text-red-700 text-sm">
+                            Remove Image
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <input type="file" id="fileInput" accept="image/*" class="hidden">
+        </div>
+
+        <!-- Editing Controls -->
+        <div class="glass-card rounded-2xl p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i data-lucide="edit-3" class="w-5 h-5 mr-2"></i>
+                Edit Instructions
+            </h2>
+            
+            <div class="space-y-4">
+                <!-- Prompt Input -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        What would you like to change?
+                    </label>
+                    <textarea id="promptInput" 
+                              placeholder="Describe your edits... e.g., 'Replace the sofa with a modern black leather sectional' or 'Change the wall color to sage green'"
+                              class="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              maxlength="500"></textarea>
+                    <div class="text-right text-xs text-gray-500 mt-1">
+                        <span id="charCount">0</span>/500 characters
+                    </div>
+                </div>
+
+                <!-- Advanced Settings (Collapsible) -->
+                <div class="border-t pt-4">
+                    <button onclick="toggleAdvanced()" class="flex items-center text-gray-700 hover:text-gray-900 text-sm font-medium">
+                        <i data-lucide="settings" class="w-4 h-4 mr-2"></i>
+                        Advanced Settings
+                        <i data-lucide="chevron-down" id="advancedChevron" class="w-4 h-4 ml-2 transition-transform"></i>
+                    </button>
+                    
+                    <div id="advancedSettings" class="hidden mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Inference Steps -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Inference Steps: <span id="stepsValue">60</span>
+                            </label>
+                            <input type="range" id="stepsSlider" min="20" max="100" value="60" 
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Faster (20)</span>
+                                <span>Better Quality (100)</span>
+                            </div>
+                        </div>
+                        
+                        <!-- CFG Scale -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                CFG Scale: <span id="cfgValue">1.2</span>
+                            </label>
+                            <input type="range" id="cfgSlider" min="1.0" max="2.0" step="0.1" value="1.2" 
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Creative (1.0)</span>
+                                <span>Guided (2.0)</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Negative Prompt -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Negative Prompt (Optional)
+                            </label>
+                            <input type="text" id="negativePrompt" 
+                                   placeholder="Things to avoid... e.g., 'blurry, low quality, distorted'"
+                                   value="low quality, blurry, distorted, artifacts, noise, bad composition"
+                                   class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Button -->
+            <div class="mt-6">
+                <button id="editButton" onclick="processImage()" 
+                        class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                    <i data-lucide="wand-2" class="w-5 h-5"></i>
+                    <span>Edit Image</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progressSection" class="glass-card rounded-2xl p-6 hidden">
+            <div class="text-center">
+                <div class="relative inline-flex items-center justify-center">
+                    <svg class="w-20 h-20 transform -rotate-90">
+                        <circle cx="40" cy="40" r="32" stroke="#e5e7eb" stroke-width="4" fill="none"/>
+                        <circle id="progressCircle" cx="40" cy="40" r="32" stroke="#3b82f6" stroke-width="4" 
+                                fill="none" stroke-linecap="round" 
+                                stroke-dasharray="201" stroke-dashoffset="201"
+                                class="progress-ring"/>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span id="progressPercent" class="text-lg font-semibold text-gray-700">0%</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h3 class="text-lg font-medium text-gray-800">Processing Your Image</h3>
+                    <p id="progressStatus" class="text-gray-600 loading-dots">Initializing</p>
+                    <div class="mt-2 text-sm text-gray-500">
+                        <span>Estimated time: </span>
+                        <span id="estimatedTime">60-90 seconds</span>
+                    </div>
+                </div>
+                
+                <!-- Progress Steps -->
+                <div class="mt-6 flex justify-center">
+                    <div class="flex space-x-4 text-xs">
+                        <div id="step1" class="flex items-center text-blue-600">
+                            <div class="w-2 h-2 bg-blue-600 rounded-full mr-2 animate-pulse-slow"></div>
+                            Upload
+                        </div>
+                        <div id="step2" class="flex items-center text-gray-400">
+                            <div class="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
+                            Process
+                        </div>
+                        <div id="step3" class="flex items-center text-gray-400">
+                            <div class="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
+                            Generate
+                        </div>
+                        <div id="step4" class="flex items-center text-gray-400">
+                            <div class="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
+                            Complete
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="glass-card rounded-2xl p-6 hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>
+                Your Edited Image
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Original -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">Original</h3>
+                    <div class="relative">
+                        <img id="originalResult" class="w-full rounded-lg shadow-lg">
+                    </div>
+                </div>
+                
+                <!-- Edited -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">Edited Result</h3>
+                    <div class="relative">
+                        <img id="editedResult" class="w-full rounded-lg shadow-lg result-image">
+                        <button onclick="downloadImage()" 
+                                class="absolute top-3 right-3 bg-white bg-opacity-90 hover:bg-opacity-100 p-2 rounded-lg shadow-md transition-all">
+                            <i data-lucide="download" class="w-4 h-4 text-gray-700"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Processing Info -->
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="text-lg font-semibold text-gray-800" id="processingTime">--</div>
+                    <div class="text-xs text-gray-600">Processing Time</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="text-lg font-semibold text-gray-800" id="usedSteps">--</div>
+                    <div class="text-xs text-gray-600">Inference Steps</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="text-lg font-semibold text-gray-800" id="usedCfg">--</div>
+                    <div class="text-xs text-gray-600">CFG Scale</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="text-lg font-semibold text-gray-800" id="modeIndicator">✓</div>
+                    <div class="text-xs text-gray-600" id="modeText">Production</div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                <button onclick="startOver()" 
+                        class="flex-1 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center space-x-2">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span>Edit Another Image</span>
+                </button>
+                <button onclick="editAgain()" 
+                        class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    <span>Edit This Image Again</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImage = null;
+        let currentImageUrl = null;
+        let resultImageUrl = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const promptInput = document.getElementById('promptInput');
+            const stepsSlider = document.getElementById('stepsSlider');
+            const cfgSlider = document.getElementById('cfgSlider');
+
+            // File upload
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Prompt character counter
+            promptInput.addEventListener('input', function() {
+                document.getElementById('charCount').textContent = this.value.length;
+                updateEditButton();
+            });
+
+            // Sliders
+            stepsSlider.addEventListener('input', function() {
+                document.getElementById('stepsValue').textContent = this.value;
+            });
+
+            cfgSlider.addEventListener('input', function() {
+                document.getElementById('cfgValue').textContent = this.value;
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            currentImage = file;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImageUrl = e.target.result;
+                document.getElementById('previewImg').src = currentImageUrl;
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('uploadPrompt').classList.add('hidden');
+                document.getElementById('imagePreview').classList.remove('hidden');
+                updateEditButton();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearImage() {
+            currentImage = null;
+            currentImageUrl = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('uploadPrompt').classList.remove('hidden');
+            document.getElementById('imagePreview').classList.add('hidden');
+            updateEditButton();
+        }
+
+        function updateEditButton() {
+            const hasImage = currentImage !== null;
+            const hasPrompt = document.getElementById('promptInput').value.trim().length > 0;
+            document.getElementById('editButton').disabled = !(hasImage && hasPrompt);
+        }
+
+        function toggleAdvanced() {
+            const settings = document.getElementById('advancedSettings');
+            const chevron = document.getElementById('advancedChevron');
+            
+            if (settings.classList.contains('hidden')) {
+                settings.classList.remove('hidden');
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                settings.classList.add('hidden');
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        async function processImage() {
+            if (!currentImage) return;
+
+            // Hide results and show progress
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+            document.getElementById('editButton').disabled = true;
+
+            // Convert image to base64 for JSON payload
+            const imageBase64 = await fileToBase64(currentImage);
+
+            // Prepare JSON payload
+            const payload = {
+                image: imageBase64,
+                prompt: document.getElementById('promptInput').value,
+                negative_prompt: document.getElementById('negativePrompt').value,
+                num_inference_steps: document.getElementById('stepsSlider').value,
+                true_cfg_scale: document.getElementById('cfgSlider').value
+            };
+
+            try {
+                // Start progress tracking
+                startProgress();
+
+                const response = await fetch('/api/edit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showResults(result);
+                } else {
+                    showError(result.error || 'Processing failed');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                document.getElementById('progressSection').classList.add('hidden');
+                document.getElementById('editButton').disabled = false;
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]); // Remove data:image/...;base64, prefix
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function startProgress() {
+            let progress = 0;
+            const progressCircle = document.getElementById('progressCircle');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStatus = document.getElementById('progressStatus');
+            
+            // Update progress steps
+            updateProgressStep(1, 'active');
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 3;
+                if (progress > 95) progress = 95;
+
+                const offset = 201 - (201 * progress) / 100;
+                progressCircle.style.strokeDashoffset = offset;
+                progressPercent.textContent = Math.round(progress) + '%';
+
+                // Update status messages
+                if (progress < 25) {
+                    progressStatus.textContent = 'Uploading image';
+                } else if (progress < 50) {
+                    progressStatus.textContent = 'Analyzing content';
+                    updateProgressStep(2, 'active');
+                } else if (progress < 85) {
+                    progressStatus.textContent = 'Generating edits';
+                    updateProgressStep(3, 'active');
+                } else {
+                    progressStatus.textContent = 'Finalizing result';
+                }
+            }, 800);
+
+            // Store interval to clear it later
+            window.progressInterval = interval;
+        }
+
+        function updateProgressStep(stepNum, state) {
+            const step = document.getElementById(`step${stepNum}`);
+            const dot = step.querySelector('div');
+            
+            if (state === 'active') {
+                step.classList.remove('text-gray-400');
+                step.classList.add('text-blue-600');
+                dot.classList.remove('bg-gray-300');
+                dot.classList.add('bg-blue-600', 'animate-pulse-slow');
+            }
+        }
+
+        function showResults(result) {
+            if (window.progressInterval) {
+                clearInterval(window.progressInterval);
+            }
+
+            // Complete progress
+            document.getElementById('progressCircle').style.strokeDashoffset = '0';
+            document.getElementById('progressPercent').textContent = '100%';
+            updateProgressStep(4, 'active');
+
+            // Store result URL
+            resultImageUrl = result.image_url;
+
+            // Show results
+            document.getElementById('originalResult').src = currentImageUrl;
+            document.getElementById('editedResult').src = result.image_url;
+            document.getElementById('processingTime').textContent = result.processing_time?.toFixed(1) + 's' || '--';
+            document.getElementById('usedSteps').textContent = result.parameters?.num_inference_steps || '--';
+            document.getElementById('usedCfg').textContent = result.parameters?.true_cfg_scale || '--';
+            
+            // Update mode indicator
+            const modeIndicator = document.getElementById('modeIndicator');
+            const modeText = document.getElementById('modeText');
+            if (result.demo_mode) {
+                modeIndicator.textContent = '◉';
+                modeText.textContent = 'Demo Mode';
+            } else {
+                modeIndicator.textContent = '✓';
+                modeText.textContent = 'Production';
+            }
+
+            setTimeout(() => {
+                document.getElementById('progressSection').classList.add('hidden');
+                document.getElementById('resultsSection').classList.remove('hidden');
+            }, 1000);
+        }
+
+        function showError(message) {
+            if (window.progressInterval) {
+                clearInterval(window.progressInterval);
+            }
+
+            alert('Error: ' + message);
+            document.getElementById('progressSection').classList.add('hidden');
+        }
+
+        function downloadImage() {
+            if (resultImageUrl) {
+                const a = document.createElement('a');
+                a.href = resultImageUrl;
+                a.download = 'qwen_edited_image.png';
+                a.click();
+            }
+        }
+
+        function startOver() {
+            clearImage();
+            document.getElementById('promptInput').value = '';
+            document.getElementById('charCount').textContent = '0';
+            document.getElementById('resultsSection').classList.add('hidden');
+        }
+
+        function editAgain() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            // Keep the current image and allow editing with new prompt
+        }
+    </script>
+</body>
+</html>

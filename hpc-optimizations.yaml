@@ -1,0 +1,146 @@
+# HPC-Specific AI Workbench Configurations
+
+hpc-1-config:
+  name: "HPC-1 Flagship Configuration"
+  target_system: "AMD 7975WX + 2x RTX PRO 6000 Blackwell (192GB VRAM)"
+  
+  environment:
+    variables:
+      CUDA_VISIBLE_DEVICES: "0,1"
+      NVIDIA_VISIBLE_DEVICES: "0,1"
+      HF_HOME: "/data/models"
+      TORCH_CUDA_ARCH_LIST: "9.0"  # Blackwell architecture
+      NCCL_DEBUG: "INFO"
+      NCCL_IB_DISABLE: "1"
+      
+  model_config:
+    strategy: "multi_gpu_data_parallel"
+    precision: "bf16"  # Better for Blackwell
+    max_batch_size: 16
+    workers: 8
+    sharding: true
+    gradient_checkpointing: true
+    
+  memory_optimization:
+    offload_to_cpu: false  # Plenty of VRAM
+    use_deepspeed: true
+    attention_slicing: false
+    vae_slicing: false
+    
+  performance_tuning:
+    compile_model: true
+    use_flash_attention: true
+    enable_xformers: true
+    cpu_threads: 32  # Match core count
+
+---
+
+hpc-2-config:
+  name: "HPC-2 Multi-GPU Configuration"
+  target_system: "AMD 7975WX + 3x RTX 5090 (96GB total VRAM)"
+  
+  environment:
+    variables:
+      CUDA_VISIBLE_DEVICES: "0,1,2"
+      NVIDIA_VISIBLE_DEVICES: "0,1,2"
+      HF_HOME: "/data/models"
+      TORCH_CUDA_ARCH_LIST: "8.9"  # Ada Lovelace
+      
+  model_config:
+    strategy: "model_parallel_pipeline"
+    precision: "fp16"
+    max_batch_size: 8
+    workers: 6
+    pipeline_parallel_size: 3
+    
+  memory_optimization:
+    offload_to_cpu: false
+    use_deepspeed: true
+    attention_slicing: true  # Optimize for 32GB per GPU
+    vae_slicing: true
+    
+  performance_tuning:
+    compile_model: true
+    use_flash_attention: true
+    enable_xformers: true
+    cpu_threads: 32
+
+---
+
+hpc-3-config:
+  name: "HPC-3 Development Configuration" 
+  target_system: "AMD 7970X + NVIDIA L40 (48GB VRAM)"
+  
+  environment:
+    variables:
+      CUDA_VISIBLE_DEVICES: "0"
+      NVIDIA_VISIBLE_DEVICES: "0"
+      HF_HOME: "/data/models"
+      TORCH_CUDA_ARCH_LIST: "8.9"  # Ada Lovelace
+      
+  model_config:
+    strategy: "single_gpu"
+    precision: "fp16"
+    max_batch_size: 4
+    workers: 4
+    enable_quantization: true  # 8bit/4bit options
+    
+  memory_optimization:
+    offload_to_cpu: true  # Conservative approach
+    use_deepspeed: false
+    attention_slicing: true
+    vae_slicing: true
+    
+  performance_tuning:
+    compile_model: false  # Faster startup for dev
+    use_flash_attention: true
+    enable_xformers: true
+    cpu_threads: 16
+
+---
+
+# Network and Load Balancing
+network_config:
+  load_balancer:
+    type: "nginx"
+    upstream_servers:
+      - "hpc-1.lab:8001 weight=3"  # Highest capacity
+      - "hpc-2.lab:8002 weight=2"  # Good capacity
+      - "hpc-3.lab:8003 weight=1"  # Development/backup
+    
+    health_checks:
+      interval: 30
+      timeout: 10
+      path: "/health"
+      
+  shared_storage:
+    type: "nfs_over_10gbe"
+    mount_points:
+      models: "/shared/models"
+      outputs: "/shared/outputs"
+      cache: "/shared/cache"
+
+---
+
+# Proxmox VM Specifications
+proxmox_vm_specs:
+  hpc-1-vm:
+    cores: 24  # Leave 8 cores for host
+    memory: 200GB  # Leave 56GB for host
+    disk: "2TB (thin provisioned)"
+    gpu_passthrough: "both_rtx_pro_6000"
+    network: "10GbE bridge"
+    
+  hpc-2-vm:
+    cores: 24
+    memory: 200GB
+    disk: "2TB (thin provisioned)"
+    gpu_passthrough: "all_three_rtx_5090"
+    network: "10GbE bridge"
+    
+  hpc-3-vm:
+    cores: 20  # Leave 4 cores for host
+    memory: 96GB   # Leave 32GB for host
+    disk: "1TB (thin provisioned)"
+    gpu_passthrough: "l40"
+    network: "10GbE bridge"

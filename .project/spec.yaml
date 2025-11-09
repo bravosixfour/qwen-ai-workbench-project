@@ -1,0 +1,174 @@
+specVersion: v2
+specMinorVersion: 2
+meta:
+    name: qwen-image-edit-ai-workbench
+    image: project-qwen-image-edit
+    description: Qwen-Image-Edit-2509 AI model deployment with web UI for multi-server deployment on DGX systems
+    labels: 
+      - image-generation
+      - image-editing
+      - gpu-required
+      - qwen
+    createdOn: "2025-11-09T00:00:00Z"
+    defaultBranch: main
+layout:
+    - path: code/
+      type: code
+      storage: git
+    - path: models/
+      type: models
+      storage: gitlfs
+    - path: data/
+      type: data
+      storage: gitignore
+    - path: data/outputs/
+      type: data
+      storage: gitignore
+    - path: data/cache/
+      type: data
+      storage: gitignore
+environment:
+    base:
+        registry: nvcr.io
+        image: nvidia/pytorch:24.10-py3
+        build_timestamp: "20241101000000"
+        name: PyTorch with CUDA
+        supported_architectures:
+          - amd64
+          - arm64
+        cuda_version: "12.6"
+        description: PyTorch environment optimized for Qwen Image Edit model with CUDA support
+        entrypoint_script: ""
+        labels:
+            - ubuntu
+            - python3
+            - pytorch
+            - cuda
+            - jupyterlab
+        apps:
+            - name: jupyterlab
+              type: jupyterlab
+              class: webapp
+              start_command: jupyter lab --allow-root --port 8888 --ip 0.0.0.0 --no-browser --NotebookApp.base_url=\$PROXY_PREFIX --NotebookApp.default_url=/lab --NotebookApp.allow_origin='*'
+              health_check_command: '[ \$(echo url=\$(jupyter lab list | head -n 2 | tail -n 1 | cut -f1 -d'' '' | grep -v ''Currently'' | sed "s@/?@/lab?@g") | curl -o /dev/null -s -w ''%{http_code}'' --config -) == ''200'' ]'
+              stop_command: jupyter lab stop 8888
+              user_msg: ""
+              logfile_path: ""
+              timeout_seconds: 60
+              icon_url: ""
+              webapp_options:
+                autolaunch: false
+                port: "8888"
+                proxy:
+                    trim_prefix: false
+                url_command: jupyter lab list | head -n 2 | tail -n 1 | cut -f1 -d' ' | grep -v 'Currently'
+        programming_languages:
+            - python3
+        icon_url: https://raw.githubusercontent.com/Qwen/Qwen/main/assets/logo.jpg
+        image_version: 24.10
+        os: linux
+        os_distro: ubuntu
+        os_distro_release: "22.04"
+        schema_version: v2
+        user_info:
+            uid: ""
+            gid: ""
+            username: ""
+        package_managers:
+            - name: apt
+              binary_path: /usr/bin/apt
+              installed_packages: []
+            - name: pip
+              binary_path: /usr/bin/pip
+              installed_packages: []
+            - name: conda
+              binary_path: /opt/conda/bin/conda
+              installed_packages: []
+    requirements_file: requirements.txt
+    pre_build_script: preBuild.bash
+    post_build_script: postBuild.bash
+execution:
+    apps:
+        - name: Qwen API
+          type: custom
+          class: process
+          start_command: |
+            cd /project/code/api && \
+            export HF_HOME=/project/models && \
+            export PYTHONUNBUFFERED=1 && \
+            gunicorn app:app \
+                --workers 4 \
+                --threads 2 \
+                --worker-class uvicorn.workers.UvicornWorker \
+                --bind 0.0.0.0:8000 \
+                --timeout 300 \
+                --access-logfile -
+          health_check_command: curl -f http://localhost:8000/health
+          stop_command: pkill -f 'gunicorn app:app'
+          user_msg: "Starting Qwen Image Edit API server..."
+          logfile_path: /project/data/logs/api.log
+          timeout_seconds: 300
+          icon_url: ""
+        - name: Mango Editor
+          type: custom
+          class: webapp
+          start_command: |
+            cd /project/code/editor && \
+            export PROXY_PREFIX && \
+            export QUANTO_MANGO_API_URL=http://localhost:8000 && \
+            node server.js
+          health_check_command: curl -f http://localhost:3002/health
+          stop_command: pkill -f 'node server.js'
+          user_msg: "Starting Mango Editor UI..."
+          logfile_path: /project/data/logs/editor.log
+          timeout_seconds: 60
+          icon_url: ""
+          webapp_options:
+            autolaunch: true
+            port: "3002"
+            proxy:
+                trim_prefix: false
+            url: http://localhost:3002
+        - name: Redis Cache
+          type: custom
+          class: process
+          start_command: |
+            redis-server --port 6379 --maxmemory 2gb --maxmemory-policy allkeys-lru
+          health_check_command: redis-cli ping
+          stop_command: redis-cli shutdown
+          user_msg: "Starting Redis cache..."
+          logfile_path: /project/data/logs/redis.log
+          timeout_seconds: 30
+          icon_url: ""
+    resources:
+        gpu:
+            requested: 1
+        sharedMemoryMB: 32768
+    secrets:
+        - variable: HF_TOKEN
+          description: HuggingFace token for downloading gated models
+        - variable: API_KEY
+          description: Optional API key for securing endpoints
+    mounts:
+        - type: project
+          target: /project/
+          description: Project directory
+          options: rw
+        - type: volume
+          target: /models-cache/
+          description: Shared model cache across deployments
+          options: rw
+    connections:
+        - name: dgx-spark
+          type: ssh
+          description: DGX Spark connection for development and testing
+          host: dgx-spark.lab
+          username: $USER
+        - name: hpc-cluster
+          type: custom
+          description: HPC lab cluster orchestrated via DGX Spark
+          orchestrator: dgx-spark
+          targets:
+            - hpc-1.lab
+            - hpc-2.lab
+            - hpc-3.lab

@@ -1,0 +1,246 @@
+# DGX Spark Specific Configuration
+# Optimized for NVIDIA AI Workbench integration
+
+dgx_spark_profile:
+  name: "DGX Spark Lab Configuration"
+  description: "Enterprise AI development and orchestration hub"
+  
+  # Expected DGX Spark Specifications (update with actual specs)
+  hardware:
+    cpu: "Grace Hopper Superchip or ARM-based architecture"
+    gpu: "H100 or newer generation (estimated 80GB+ VRAM per GPU)"
+    memory: "1TB+ unified memory architecture"
+    storage: "High-speed NVMe SSD array"
+    network: "InfiniBand + 100GbE Ethernet"
+    ai_software: "NVIDIA AI Enterprise software stack"
+    
+  # AI Workbench Integration
+  workbench_config:
+    desktop_app_support: true
+    remote_development: true
+    jupyter_lab: true
+    vscode_remote: true
+    git_integration: true
+    model_registry: true
+    experiment_tracking: true
+    
+  # Software Stack (Pre-installed on DGX)
+  nvidia_software:
+    base_os: "Ubuntu 22.04 LTS (DGX OS)"
+    docker: "NVIDIA Container Toolkit enabled"
+    kubernetes: "NVIDIA GPU Operator"
+    drivers: "Latest NVIDIA drivers"
+    cuda: "CUDA 12.x"
+    cudnn: "cuDNN 8.x"
+    nccl: "NCCL for multi-GPU communication"
+    tensorrt: "TensorRT for inference optimization"
+    triton: "Triton Inference Server"
+    
+  # Development Environment
+  development_stack:
+    python: "3.10+"
+    pytorch: "Latest with CUDA support"
+    tensorflow: "Latest with CUDA support"
+    transformers: "Latest HuggingFace transformers"
+    diffusers: "Latest diffusion models support"
+    jupyter: "JupyterLab with GPU extensions"
+    vscode_server: "Remote development support"
+    
+# AI Workbench Project Configuration for DGX Spark
+ai_workbench_integration:
+  project_type: "Multi-environment AI deployment"
+  
+  # Environment Definitions
+  environments:
+    dgx_development:
+      name: "DGX Spark Development"
+      purpose: "Interactive development and model testing"
+      base_image: "nvcr.io/nvidia/pytorch:24.10-py3"
+      gpu_allocation: 1
+      memory_allocation: "64GB"
+      storage_allocation: "500GB"
+      
+      environment_variables:
+        HF_HOME: "/workspace/models"
+        CUDA_VISIBLE_DEVICES: "0"
+        TORCH_CUDA_ARCH_LIST: "9.0"  # H100 architecture
+        NCCL_DEBUG: "INFO"
+        PYTHONUNBUFFERED: "1"
+        
+      applications:
+        - name: "Jupyter Lab"
+          type: "jupyter"
+          port: 8888
+          auto_launch: true
+          
+        - name: "VS Code Server"
+          type: "vscode"
+          port: 8080
+          auto_launch: false
+          
+        - name: "Qwen API Server"
+          type: "custom"
+          port: 8001
+          command: "python /workspace/code/api/main.py"
+          health_check: "/health"
+          
+    dgx_production:
+      name: "DGX Spark Production"
+      purpose: "Production model serving and orchestration"
+      base_image: "nvcr.io/nvidia/pytorch:24.10-py3"
+      gpu_allocation: 2  # Use both GPUs
+      memory_allocation: "128GB"
+      storage_allocation: "1TB"
+      
+      environment_variables:
+        HF_HOME: "/workspace/models"
+        CUDA_VISIBLE_DEVICES: "0,1"
+        TORCH_CUDA_ARCH_LIST: "9.0"
+        NCCL_DEBUG: "WARN"
+        PYTHONUNBUFFERED: "1"
+        
+      optimization_flags:
+        use_flash_attention: true
+        enable_model_parallelism: true
+        enable_gradient_checkpointing: true
+        compile_model: true
+        
+# Network Configuration
+network_setup:
+  # DGX Spark to Mac Studio
+  mac_connection:
+    protocol: "SSH + HTTPS"
+    ai_workbench_desktop: "Direct integration"
+    nvidia_sync: "Unified desktop experience"
+    ports:
+      ssh: 22
+      jupyter: 8888
+      vscode: 8080
+      api: 8001
+      
+  # DGX Spark to HPC Lab
+  hpc_connection:
+    protocol: "10GbE + SSH"
+    orchestration_role: "Primary orchestrator"
+    deployment_method: "Remote execution via SSH"
+    monitoring: "Centralized via DGX Spark"
+    
+    hpc_targets:
+      - name: "hpc-1.lab"
+        role: "Primary production"
+        priority: 1
+        
+      - name: "hpc-2.lab"
+        role: "Multi-user serving"
+        priority: 2
+        
+      - name: "hpc-3.lab"
+        role: "Development backup"
+        priority: 3
+
+# Model Management
+model_management:
+  model_registry:
+    location: "/workspace/models"
+    huggingface_cache: "/workspace/.cache/huggingface"
+    custom_models: "/workspace/custom_models"
+    
+  optimization_strategy:
+    quantization: "Dynamic (FP16/INT8/INT4 as needed)"
+    model_sharding: "Automatic across available GPUs"
+    attention_optimization: "Flash Attention 2.0"
+    memory_management: "Gradient checkpointing enabled"
+    
+  deployment_pipeline:
+    development: "Single GPU, FP16 precision"
+    testing: "Multi-GPU validation"
+    production: "Optimized inference deployment"
+
+# Resource Allocation Strategy
+resource_allocation:
+  development_workload:
+    cpu_cores: 16
+    memory: "64GB"
+    gpu: 1
+    storage: "500GB SSD"
+    
+  production_workload:
+    cpu_cores: 32
+    memory: "128GB"
+    gpu: 2
+    storage: "1TB SSD"
+    
+  orchestration_overhead:
+    cpu_cores: 8
+    memory: "32GB"
+    network_bandwidth: "10Gbps reserved"
+
+# Monitoring and Management
+monitoring_setup:
+  nvidia_smi: "GPU utilization tracking"
+  prometheus: "Metrics collection"
+  grafana: "Visualization dashboard"
+  logs: "/var/log/dgx-spark/"
+  
+  key_metrics:
+    - gpu_utilization
+    - memory_usage
+    - inference_latency
+    - throughput_metrics
+    - temperature_monitoring
+    - power_consumption
+    
+# Security Configuration
+security_setup:
+  authentication:
+    ssh_keys: "AI Workbench managed"
+    nvidia_sync: "Automatic key generation"
+    api_keys: "Environment variable based"
+    
+  network_security:
+    firewall: "Restricted to lab network"
+    ssl_certificates: "Self-signed for lab"
+    vpn_support: "If needed for remote access"
+    
+# Backup and Recovery
+backup_strategy:
+  models: "Distributed across HPC systems"
+  code: "Git repository with AI Workbench"
+  data: "Shared storage with HPC lab"
+  configurations: "Version controlled"
+  
+  disaster_recovery:
+    primary: "DGX Spark as main hub"
+    fallback: "HPC-1 can serve as backup orchestrator"
+    data_replication: "Real-time sync to HPC storage"
+
+# Performance Optimization
+performance_tuning:
+  # For your specific use case
+  image_editing_optimization:
+    batch_processing: "Optimized for multiple images"
+    memory_efficiency: "Gradient accumulation"
+    latency_optimization: "Model compilation + TensorRT"
+    
+  # Multi-system coordination
+  distributed_processing:
+    load_balancing: "Intelligent workload distribution"
+    fault_tolerance: "Automatic failover to HPC systems"
+    scaling: "Horizontal scaling to HPC lab"
+
+# Integration Points
+integration_workflows:
+  mac_to_dgx:
+    development: "AI Workbench desktop → DGX Spark"
+    deployment: "One-click push to DGX environment"
+    monitoring: "Real-time status in desktop app"
+    
+  dgx_to_hpc:
+    orchestration: "DGX coordinates HPC deployments"
+    scaling: "Automatic distribution based on load"
+    management: "Centralized control from DGX"
+    
+  unified_experience:
+    single_interface: "AI Workbench desktop on Mac"
+    seamless_scaling: "Transparent resource allocation"
+    enterprise_features: "NVIDIA support and optimization"

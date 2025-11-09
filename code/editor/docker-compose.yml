@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  quanto-mango-image-editor:
+    build: .
+    container_name: quanto-mango-image-editor-local
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - QUANTO_MANGO_API_URL=http://10.10.10.156:8000
+    networks:
+      - quanto-mango-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.quanto-mango.app=image-editor"
+      - "com.quanto-mango.version=1.0.0"
+      - "com.quanto-mango.description=Local Quanto mango Image Editor with API connection"
+
+networks:
+  quanto-mango-network:
+    driver: bridge
+    name: quanto-mango-network
+
+# For development with volume mounting (uncomment if needed)
+# volumes:
+#   qwen-app-data:
+#     driver: local

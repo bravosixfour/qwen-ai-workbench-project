@@ -1,0 +1,196 @@
+{
+  "lab_name": "Custom AI Lab Infrastructure",
+  "description": "Optimized Qwen deployment for custom HPC rack systems",
+  
+  "systems": {
+    "hpc-1": {
+      "name": "HPC-1 Flagship",
+      "cpu": "AMD 7975WX (32C/64T)",
+      "motherboard": "WRX90 SAGE SE",
+      "memory": "256GB DDR5",
+      "storage": "4TB Gen5 NVMe",
+      "gpus": [
+        {
+          "model": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+          "count": 2,
+          "vram_per_gpu": "96GB",
+          "total_vram": "192GB",
+          "cooling": "Custom waterblocks"
+        }
+      ],
+      "network": "Dual 10GbE",
+      "power": "2500W Hela PSU",
+      "virtualization": "Proxmox",
+      "cooling": "Centralized watercooling",
+      "recommended_config": {
+        "role": "Primary inference server",
+        "workers": 8,
+        "batch_size": 16,
+        "model_sharding": true,
+        "multi_gpu_strategy": "data_parallel",
+        "expected_throughput": "Highest - flagship system"
+      }
+    },
+    
+    "hpc-2": {
+      "name": "HPC-2 Multi-GPU",
+      "cpu": "AMD 7975WX (32C/64T)",
+      "motherboard": "WRX90 SAGE SE", 
+      "memory": "256GB DDR5",
+      "gpus": [
+        {
+          "model": "RTX 5090 Aorus",
+          "count": 3,
+          "vram_per_gpu": "32GB",
+          "total_vram": "96GB",
+          "cooling": "Waterblocked"
+        }
+      ],
+      "network": "Dual 10GbE",
+      "power": "2500W Hela PSU",
+      "virtualization": "Proxmox",
+      "cooling": "Centralized watercooling",
+      "recommended_config": {
+        "role": "Multi-instance server",
+        "workers": 6,
+        "batch_size": 8,
+        "model_sharding": false,
+        "multi_gpu_strategy": "model_parallel",
+        "expected_throughput": "High - excellent for parallel workloads"
+      }
+    },
+    
+    "hpc-3": {
+      "name": "HPC-3 Development",
+      "cpu": "AMD 7970X",
+      "motherboard": "TRX50 AI TOP",
+      "memory": "128GB DDR5",
+      "gpus": [
+        {
+          "model": "NVIDIA L40",
+          "count": 1,
+          "vram_per_gpu": "48GB", 
+          "total_vram": "48GB",
+          "cooling": "Waterblocked"
+        }
+      ],
+      "network": "Dual 10GbE",
+      "virtualization": "Proxmox",
+      "cooling": "Centralized watercooling",
+      "recommended_config": {
+        "role": "Development and testing",
+        "workers": 4,
+        "batch_size": 4,
+        "model_sharding": false,
+        "multi_gpu_strategy": "none",
+        "expected_throughput": "Good - ideal for development"
+      }
+    }
+  },
+
+  "deployment_strategy": {
+    "primary": "hpc-1",
+    "secondary": "hpc-2", 
+    "development": "hpc-3",
+    
+    "load_balancing": {
+      "enabled": true,
+      "strategy": "round_robin",
+      "health_check_interval": 30,
+      "failover": true
+    },
+    
+    "model_distribution": {
+      "hpc-1": {
+        "models": ["qwen-image-edit-2509", "backup-models"],
+        "strategy": "multi_gpu_parallel",
+        "memory_optimization": "gradient_checkpointing"
+      },
+      "hpc-2": {
+        "models": ["qwen-image-edit-2509"],
+        "strategy": "3_gpu_pipeline",
+        "memory_optimization": "model_sharding"
+      },
+      "hpc-3": {
+        "models": ["qwen-image-edit-2509"],
+        "strategy": "single_gpu",
+        "memory_optimization": "quantized_inference"
+      }
+    }
+  },
+
+  "network_config": {
+    "backbone": "10GbE mesh",
+    "api_ports": {
+      "hpc-1": 8001,
+      "hpc-2": 8002, 
+      "hpc-3": 8003
+    },
+    "ui_ports": {
+      "hpc-1": 3001,
+      "hpc-2": 3002,
+      "hpc-3": 3003
+    },
+    "load_balancer": {
+      "api_port": 8000,
+      "ui_port": 3000
+    }
+  },
+
+  "performance_expectations": {
+    "hpc-1": {
+      "images_per_minute": "40-60",
+      "concurrent_requests": "16-24",
+      "memory_efficiency": "Excellent (192GB VRAM)",
+      "best_for": "Large batch processing, complex multi-image edits"
+    },
+    "hpc-2": {
+      "images_per_minute": "25-35", 
+      "concurrent_requests": "12-18",
+      "memory_efficiency": "Very Good (96GB total)",
+      "best_for": "Parallel processing, multiple simultaneous users"
+    },
+    "hpc-3": {
+      "images_per_minute": "15-25",
+      "concurrent_requests": "6-8", 
+      "memory_efficiency": "Good (48GB)",
+      "best_for": "Development, testing, single-user workflows"
+    }
+  },
+
+  "deployment_priorities": {
+    "1": {
+      "system": "hpc-1",
+      "reason": "Massive 192GB VRAM enables largest models and batches",
+      "use_case": "Production inference server"
+    },
+    "2": {
+      "system": "hpc-2", 
+      "reason": "3x RTX 5090 excellent for distributed processing",
+      "use_case": "Multi-user environment, load balancing"
+    },
+    "3": {
+      "system": "hpc-3",
+      "reason": "L40 perfect for development and testing",
+      "use_case": "Development environment, model experimentation"
+    }
+  },
+
+  "cooling_advantages": {
+    "centralized_watercooling": [
+      "Sustained high-performance under load",
+      "Lower GPU throttling = consistent inference times", 
+      "Quieter operation for lab environment",
+      "Better overclocking headroom if needed"
+    ]
+  },
+
+  "proxmox_benefits": {
+    "virtualization": [
+      "Easy deployment across multiple VMs",
+      "Resource isolation for different workloads",
+      "Live migration capabilities",
+      "Snapshot and backup functionality"
+    ]
+  }
+}

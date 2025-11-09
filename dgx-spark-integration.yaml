@@ -1,0 +1,175 @@
+# DGX Spark + HPC Lab Unified Workflow
+# Optimized for Mac Studio → DGX Spark → HPC Lab integration
+
+spark_integration:
+  name: "DGX Spark Orchestration Hub"
+  role: "Primary orchestrator and development interface"
+  
+  dgx_spark_specs:
+    # Research the actual specs of your DGX Spark
+    estimated_specs:
+      cpu: "Grace Hopper or ARM-based"
+      gpu: "H100 or newer (estimated 80GB+ VRAM per GPU)"
+      memory: "1TB+ unified memory"
+      storage: "NVMe SSD array"
+      network: "InfiniBand + Ethernet"
+      ai_software: "NVIDIA AI Enterprise stack"
+      workbench: "Native AI Workbench integration"
+    
+    advantages:
+      - "Direct Mac integration (NVIDIA Omniverse/AI Workbench)"
+      - "Pre-optimized AI software stack"
+      - "Enterprise support and reliability"
+      - "Seamless model deployment and management"
+
+# Unified Architecture
+unified_architecture:
+  control_plane:
+    primary: "Mac Studio M2 Ultra"
+    orchestrator: "DGX Spark"
+    compute_nodes: ["HPC-1", "HPC-2", "HPC-3"]
+    
+  workflow_hierarchy:
+    tier_1: "Mac Studio (Development & Control)"
+    tier_2: "DGX Spark (Orchestration & Premium Inference)"
+    tier_3: "HPC Lab (Scale-out Compute)"
+
+# Mac → Spark → HPC Workflow
+mac_spark_workflow:
+  development_flow:
+    step_1: "Code on Mac Studio (VS Code, Cursor, etc.)"
+    step_2: "Push to DGX Spark via AI Workbench"
+    step_3: "Test and validate on Spark"
+    step_4: "Deploy to HPC lab for scale"
+    step_5: "Monitor everything from Mac"
+    
+  tools_integration:
+    mac_tools:
+      - "NVIDIA AI Workbench Desktop"
+      - "Docker Desktop with NVIDIA runtime"
+      - "VS Code with remote development"
+      - "Jupyter notebooks (remote kernels)"
+      - "Git workflow management"
+    
+    spark_capabilities:
+      - "Native AI Workbench host"
+      - "Model registry and versioning"
+      - "Experiment tracking"
+      - "Resource orchestration"
+      - "Production deployment gateway"
+
+# Deployment Strategy
+deployment_strategy:
+  development_tier:
+    location: "DGX Spark"
+    purpose: "Primary development and testing"
+    models: "Latest Qwen models, experimental configs"
+    access: "Direct from Mac via AI Workbench"
+    
+  production_tier:
+    primary: "HPC-1 (192GB VRAM)"
+    secondary: "HPC-2 (3x RTX 5090)"
+    backup: "HPC-3 (L40 48GB)"
+    orchestrator: "DGX Spark manages deployments"
+    
+  scaling_logic:
+    low_load: "DGX Spark only"
+    medium_load: "Spark + HPC-1"
+    high_load: "Spark + HPC-1 + HPC-2"
+    peak_load: "All systems (Spark + HPC-1 + HPC-2 + HPC-3)"
+
+# Network Integration
+network_topology:
+  mac_to_spark:
+    connection: "Direct AI Workbench integration"
+    protocols: ["HTTPS", "SSH", "Remote Jupyter"]
+    bandwidth: "Depends on your network"
+    
+  spark_to_hpc:
+    connection: "10GbE network to lab"
+    protocols: ["gRPC", "REST API", "NFS/SMB"]
+    load_balancing: "Managed by Spark"
+    
+  shared_storage:
+    models: "DGX Spark as primary, HPC as cache"
+    outputs: "Distributed across all systems"
+    datasets: "Centralized on DGX Spark"
+
+# Resource Allocation Strategy
+resource_allocation:
+  development_workloads:
+    target: "DGX Spark"
+    reason: "Best Mac integration, enterprise support"
+    use_cases: ["Model experimentation", "Small batch testing", "Interactive development"]
+    
+  production_inference:
+    primary: "HPC-1 (192GB VRAM)"
+    reason: "Massive VRAM for largest models"
+    use_cases: ["Large batch processing", "Complex multi-image edits"]
+    
+  multi_user_serving:
+    target: "HPC-2 (3x RTX 5090)"
+    reason: "Multiple GPUs for parallel users"
+    use_cases: ["Multiple simultaneous users", "A/B testing"]
+    
+  backup_development:
+    target: "HPC-3 (L40)"
+    reason: "Dedicated development environment"
+    use_cases: ["Isolated testing", "Backup development"]
+
+# Intelligent Workload Routing
+workload_routing:
+  criteria:
+    model_size: "Large models → HPC-1, Medium → Spark, Small → any"
+    user_count: "Single user → Spark, Multiple → HPC-2"
+    priority: "Interactive → Spark, Batch → HPC"
+    resource_needs: "High VRAM → HPC-1, Standard → Spark"
+    
+  routing_logic:
+    interactive_development: "Mac → DGX Spark"
+    small_inference: "Mac → DGX Spark"
+    large_models: "Mac → DGX Spark → HPC-1"
+    multi_user: "Mac → DGX Spark → HPC-2"
+    batch_processing: "Mac → DGX Spark → (HPC-1 + HPC-2)"
+
+# Monitoring and Management
+monitoring_dashboard:
+  primary_interface: "Mac Studio (centralized view)"
+  data_sources:
+    - "DGX Spark metrics"
+    - "HPC-1 GPU utilization" 
+    - "HPC-2 multi-GPU status"
+    - "HPC-3 development status"
+    
+  key_metrics:
+    - "Queue depths across all systems"
+    - "GPU utilization and memory"
+    - "Inference latency by system"
+    - "Cost per inference by system"
+    - "System health and availability"
+
+# Advantages of This Setup
+advantages:
+  mac_integration:
+    - "Seamless development experience"
+    - "Native AI Workbench integration"
+    - "Familiar macOS environment"
+    - "Easy remote debugging"
+    
+  dgx_spark_benefits:
+    - "Enterprise-grade reliability"
+    - "Optimized AI software stack"
+    - "Direct NVIDIA support"
+    - "Future-proof architecture"
+    
+  hpc_lab_power:
+    - "Massive compute scale (288GB total VRAM)"
+    - "Custom watercooling for sustained performance"
+    - "Flexible resource allocation"
+    - "Cost-effective compared to cloud"
+    
+  unified_workflow:
+    - "Single point of control (Mac)"
+    - "Automatic workload distribution"
+    - "Consistent development → production pipeline"
+    - "Centralized monitoring and management"
